@@ -857,8 +857,21 @@ download_modern_macos() {
     log_info "Fetching available macOS installers..."
     softwareupdate --list-full-installers 2>/dev/null | grep "* Title:" | sed 's/^[[:space:]]*//' > $WORK_DIR/installers.txt
     
-    # Get latest installer version
-    local selected_version_number=$(grep -i "$version_name" $WORK_DIR/installers.txt | head -1 | sed -n 's/.*Version: \([^,]*\).*/\1/p')
+    # Prefer an explicit full installer version when requested.
+    local selected_version_number=""
+    if [ -n "${FULL_INSTALLER_VERSION:-}" ]; then
+        selected_version_number=$(grep -i "$version_name" "$WORK_DIR/installers.txt" | grep "Version: ${FULL_INSTALLER_VERSION}," | head -1 | sed -n 's/.*Version: \([^,]*\).*/\1/p')
+    fi
+
+    # Tahoe 26.3.2 is MacBook Neo only; prefer the current general Tahoe installer.
+    if [ -z "$selected_version_number" ] && [ "$version_num" = "26" ]; then
+        selected_version_number=$(grep -i "$version_name" "$WORK_DIR/installers.txt" | grep "Version: 26.3.1," | head -1 | sed -n 's/.*Version: \([^,]*\).*/\1/p')
+    fi
+
+    # Otherwise use the latest matching installer version.
+    if [ -z "$selected_version_number" ]; then
+        selected_version_number=$(grep -i "$version_name" "$WORK_DIR/installers.txt" | head -1 | sed -n 's/.*Version: \([^,]*\).*/\1/p')
+    fi
     
     if [ -z "$selected_version_number" ]; then
         log_error "macOS $version_name ($version_num) is not available for download on this system"
