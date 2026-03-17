@@ -12,7 +12,7 @@ on:
 
 jobs:
   build-macos-image:
-    runs-on: macos-15-intel
+    runs-on: macos-15
     timeout-minutes: 80
 
     steps:
